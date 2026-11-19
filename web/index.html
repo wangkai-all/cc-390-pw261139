@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>宽表拆分迁移演练台</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <h1>宽表 → 三类表 迁移演练台</h1>
+  <div id="statusbar" class="statusbar"></div>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="import">① 导入嵌套记录</button>
+  <button class="tab" data-tab="records">② 记录与改版</button>
+  <button class="tab" data-tab="compare">③ 新旧查询对比</button>
+  <button class="tab" data-tab="ops">④ 迁移与故障演练</button>
+</nav>
+
+<main>
+  <!-- 导入 -->
+  <section id="tab-import" class="panel active">
+    <div class="grid2">
+      <div>
+        <h2>导入嵌套记录（JSON 数组，每条需含 <code>id</code>）</h2>
+        <textarea id="import-input" spellcheck="false" placeholder='[{"id":"rpt-1", ...}]'></textarea>
+        <div class="btnrow">
+          <button id="btn-sample">填入示例（含空数组/重复项/嵌套）</button>
+          <button id="btn-preview">拆分预览</button>
+          <button id="btn-import" class="primary">导入（写日志+双写）</button>
+        </div>
+        <div id="import-result" class="result"></div>
+      </div>
+      <div>
+        <h2>拆分预览：主记录 / 子项分组 / 子项行</h2>
+        <div id="preview" class="result muted">点「拆分预览」查看首条记录落入三类表的形态（不写库）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 记录与改版 -->
+  <section id="tab-records" class="panel">
+    <div class="grid2">
+      <div>
+        <h2>记录清单（新版存储）</h2>
+        <div id="records-table"></div>
+      </div>
+      <div>
+        <h2>详情与改版</h2>
+        <div id="record-detail" class="muted">选择左侧记录查看。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 查询对比 -->
+  <section id="tab-compare" class="panel">
+    <h2>同一输入版本：旧接口 vs 兼容服务</h2>
+    <div class="btnrow">
+      <label>记录 <select id="cmp-record"></select></label>
+      <label>版本 <select id="cmp-version"></select></label>
+      <button id="btn-compare" class="primary">对比查询</button>
+      <button id="btn-reconcile">全量对账</button>
+    </div>
+    <div id="compare-verdict" class="result"></div>
+    <div class="grid2">
+      <div><h3>旧接口（legacy :8004）</h3><pre id="cmp-old" class="jsonview"></pre></div>
+      <div><h3>兼容服务（compat :8003 → 三类表）</h3><pre id="cmp-new" class="jsonview"></pre></div>
+    </div>
+    <h3>全量对账结果</h3>
+    <div id="reconcile-result" class="result muted">尚未对账。</div>
+  </section>
+
+  <!-- 迁移演练 -->
+  <section id="tab-ops" class="panel">
+    <h2>故障演练：模拟兼容链路晚恢复</h2>
+    <p class="hint">演练脚本：① 打开「新版存储故障」→ ② 去导入/改版几条（双写部分失败，批次进入待重放）→
+      ③ 回到本页观察待重放列表 → ④ 关闭故障并「重放日志追平」→ ⑤ 「全量对账」确认两套结果一致。
+      「兼容服务故障」用于演示查询侧晚恢复：故障期间兼容查询 503，旧接口不受影响。</p>
+    <div class="btnrow">
+      <button id="fault-storage" class="toggle">新版存储故障：关</button>
+      <button id="fault-compat" class="toggle">兼容服务故障：关</button>
+      <button id="btn-replay" class="primary">重放日志追平</button>
+      <button id="btn-refresh-ops">刷新</button>
+    </div>
+    <div class="grid2">
+      <div>
+        <h3>待重放批次</h3>
+        <div id="pending-list" class="result"></div>
+        <h3>重放结果</h3>
+        <div id="replay-result" class="result muted">尚未重放。</div>
+        <h3>新版存储三类表行数</h3>
+        <div id="storage-stats" class="result"></div>
+      </div>
+      <div>
+        <h3>按批次的对账状态（点批次号看原始输入）</h3>
+        <div id="ops-reconcile" class="result muted">在「新旧查询对比」页点「全量对账」后此处同步展示。</div>
+        <h3>批次原始输入（差异定位到原批次）</h3>
+        <pre id="batch-source" class="jsonview muted">点击上方批次号查看。</pre>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>接入转换器 :8001 · 新版存储 :8002 · 兼容服务 :8003 · 旧系统 :8004 · 本页 :8000</footer>
+<script src="/app.js"></script>
+</body>
+</html>
